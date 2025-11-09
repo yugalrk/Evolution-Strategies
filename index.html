@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Interactive ES Pathfinder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; 
+            margin: 0; 
+            padding: 1em;
+            background-color: #f9fafb; 
+            color: #374151; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1em;
+        }
+        .container { 
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5em;
+            width: 100%;
+            max-width: 1024px;
+        }
+        @media (min-width: 900px) {
+            .container {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        .main-content { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1em;
+            align-items: center; /* Center canvas */
+        }
+        canvas { 
+            border: 2px solid #a8a8a8; 
+            background: #f0f8ff; 
+            cursor: crosshair; 
+            border-radius: 8px; 
+            width: 100%;
+            max-width: 600px; /* Prevent from getting too large */
+            height: auto;
+            aspect-ratio: 1 / 1;
+        }
+        .controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5em; 
+            padding: 1.5em; 
+            background-color: #fff; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .control-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.5em; 
+        }
+        label { 
+            font-weight: 600; 
+            font-size: 0.9em; 
+        }
+        input, select { 
+            padding: 8px; 
+            border-radius: 4px; 
+            border: 1px solid #d1d5db; 
+            box-sizing: border-box; 
+            width: 100%;
+        }
+        button { 
+            padding: 10px 16px; 
+            background-color: #2563eb; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background-color 0.2s; 
+        }
+        button:hover { 
+            background-color: #1d4ed8; 
+        }
+        button:disabled { 
+            background-color: #9ca3af; 
+            cursor: not-allowed; 
+        }
+        .stats-box { 
+            border: 1px dashed #3b82f6; 
+            padding: 1em; 
+            border-radius: 6px; 
+            background-color: #e0f2fe; 
+        }
+        .stats-box p { 
+            margin: 0; 
+            padding: 0.2em 0; 
+            font-size: 0.9em; 
+        }
+        #status-message { 
+            text-align: center;
+            font-style: italic; 
+            color: #6b7280; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Evolution Strategy Pathfinder</h1>
+    <div class="container">
+        <div class="main-content">
+            <canvas id="map"></canvas>
+            <p id="status-message">Awaiting server connection...</p>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <label for="mode-select">Map Action</label>
+                <select id="mode-select">
+                    <option value="obstacle" selected>Draw Obstacles (Drag)</option>
+                    <option value="source">Set Source (Click)</option>
+                    <option value="destination">Set Destination (Click)</option>
+                </select>
+            </div>
+            
+            <button id="run-solver" disabled>Run Evolution</button>
+            <button id="reset-map" style="background-color: #dc2626;">Reset Map</button>
+
+            <div class="stats-box">
+                <p>Status: <strong id="current-status">Idle</strong></p>
+                <p>Generation: <strong id="gen-count">0</strong></p>
+                <p>Best Cost: <strong id="best-cost">N/A</strong></p>
+                <p>Path Length: <strong id="path-length">N/A</strong></p>
+            </div>
+
+            <div class="control-group">
+                <label for="num-waypoints">Waypoints (N)</label>
+                <input id="num-waypoints" type="number" value="20" min="5" max="50" />
+            </div>
+            <div class="control-group">
+                <label for="num-generations">Generations</label>
+                <input id="num-generations" type="number" value="1000" min="100" max="5000" />
+            </div>
+            <div class="control-group">
+                <label for="initial-sigma">Initial Sigma</label>
+                <input id="initial-sigma" type="number" value="0.1" step="0.01" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('map');
+        const ctx = canvas.getContext('2d');
+        
+        // --- UI Elements ---
+        const runButton = document.getElementById('run-solver');
+        const resetButton = document.getElementById('reset-map');
+        const modeSelect = document.getElementById('mode-select');
+        const waypointsInput = document.getElementById('num-waypoints');
+        const generationsInput = document.getElementById('num-generations');
+        const sigmaInput = document.getElementById('initial-sigma');
+        const statusMessage = document.getElementById('status-message');
+        const currentStatusEl = document.getElementById('current-status');
+        const genCountEl = document.getElementById('gen-count');
+        const bestCostEl = document.getElementById('best-cost');
+        const pathLengthEl = document.getElementById('path-length');
+
+        // --- State Management ---
+        let source = null;
+        let destination = null;
+        let obstacles = []; // Stores {x1, y1, x2, y2} objects, in relative coords
+        let currentPath = []; // Stores path as [[x, y], [x, y], ...]
+        let isDrawing = false;
+        let currentObstacle = null;
+        let simulationRunning = false;
+        
+        const CLEARANCE_DISTANCE = 5.0; 
+        const HARD_PENALTY = 1e9;
+
+        // --- Canvas & Coordinate Scaling ---
+        let canvasSize = 600; // Default, will be updated
+
+        function updateCanvasSize() {
+            const newSize = canvas.clientWidth;
+            if (canvas.width !== newSize) {
+                canvas.width = newSize;
+                canvas.height = newSize;
+                canvasSize = newSize;
+                draw(); // Redraw everything on resize
+            }
+        }
+
+        function toCanvasCoords(point) {
+            return { x: point.x * canvasSize, y: point.y * canvasSize };
+        }
+
+        function toRelativeCoords(point) {
+            return { x: point.x / canvasSize, y: point.y / canvasSize };
+        }
+
+        // --- WebSocket Connection ---
+        const socket = io("http://127.0.0.1:5000");
+
+        socket.on('connect', () => {
+            statusMessage.textContent = "Connected. Set source, destination, and obstacles.";
+            currentStatusEl.textContent = "Connected";
+            checkRunButton();
+        });
+
+        socket.on('disconnect', () => {
+            statusMessage.textContent = "Disconnected. Please run app.py and refresh.";
+            currentStatusEl.textContent = "Disconnected";
+            checkRunButton();
+        });
+
+        socket.on('path_update', (data) => {
+            // Path data comes in relative coordinates [0, 1], convert for drawing
+            currentPath = data.path.map(p => [p[0] * canvasSize, p[1] * canvasSize]);
+            
+            const isPenalized = data.cost >= HARD_PENALTY;
+            const costText = isPenalized ? "PENALIZED" : data.cost.toFixed(2);
+            
+            genCountEl.textContent = data.generation;
+            bestCostEl.textContent = costText;
+            pathLengthEl.textContent = data.length.toFixed(2);
+            
+            statusMessage.textContent = isPenalized 
+                ? `Evolving... Generation ${data.generation}. Searching for a valid path.`
+                : `Evolving... Generation ${data.generation}. Improving path.`;
+
+            draw();
+            
+            if (data.generation >= parseInt(generationsInput.value)) {
+                simulationRunning = false;
+                runButton.disabled = false;
+                runButton.textContent = "Run Evolution";
+                currentStatusEl.textContent = "Finished";
+                statusMessage.textContent = `Finished! Final Cost: ${costText}, Final Length: ${data.length.toFixed(2)}`;
+            }
+        });
+
+        // --- Drawing Logic ---
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Clearance Margin
+            ctx.fillStyle = 'rgba(252, 165, 165, 0.3)';
+            obstacles.forEach(obs => {
+                const x = Math.min(obs.x1, obs.x2) * canvasSize - CLEARANCE_DISTANCE;
+                const y = Math.min(obs.y1, obs.y2) * canvasSize - CLEARANCE_DISTANCE;
+                const w = Math.abs(obs.x2 - obs.x1) * canvasSize + 2 * CLEARANCE_DISTANCE;
+                const h = Math.abs(obs.y2 - obs.y1) * canvasSize + 2 * CLEARANCE_DISTANCE;
+                ctx.fillRect(x, y, w, h);
+            });
+
+            // Draw Obstacles
+            ctx.fillStyle = '#ef4444';
+            obstacles.forEach(obs => {
+                const rect = { x1: obs.x1 * canvasSize, y1: obs.y1 * canvasSize, x2: obs.x2 * canvasSize, y2: obs.y2 * canvasSize };
+                ctx.fillRect(rect.x1, rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
+            });
+            
+            // Draw current drawing obstacle
+            if (isDrawing && currentObstacle) {
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
+                ctx.fillRect(currentObstacle.x1, currentObstacle.y1, currentObstacle.x2 - currentObstacle.x1, currentObstacle.y2 - currentObstacle.y1);
+            }
+            
+            // Draw Source & Destination
+            if (source) {
+                const s = toCanvasCoords(source);
+                ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, 2 * Math.PI); ctx.fill();
+            }
+            if (destination) {
+                const d = toCanvasCoords(destination);
+                ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(d.x, d.y, 8, 0, 2 * Math.PI); ctx.fill();
+            }
+            
+            // Draw Path
+            if (currentPath.length > 0) {
+                ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(currentPath[0][0], currentPath[0][1]);
+                for (let i = 1; i < currentPath.length; i++) {
+                    ctx.lineTo(currentPath[i][0], currentPath[i][1]);
+                }
+                ctx.stroke();
+                
+                ctx.fillStyle = 'black';
+                for (let i = 1; i < currentPath.length - 1; i++) {
+                    ctx.beginPath(); ctx.arc(currentPath[i][0], currentPath[i][1], 3, 0, 2 * Math.PI); ctx.fill();
+                }
+            }
+        }
+
+        // --- Interactivity ---
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+        }
+        
+        function checkRunButton() {
+            const isReady = socket.connected && source && destination && obstacles.length > 0;
+            runButton.disabled = !isReady || simulationRunning;
+            if (!socket.connected) {
+                 runButton.textContent = "Connecting...";
+            } else if (simulationRunning) {
+                runButton.textContent = "Evolving...";
+            } else if (isReady) {
+                 runButton.textContent = "Run Evolution";
+            } else {
+                 runButton.textContent = "Set S, D, & Obstacles";
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (simulationRunning) return;
+            const pos = getMousePos(e);
+            const mode = modeSelect.value;
+
+            if (mode === 'obstacle') {
+                isDrawing = true;
+                currentObstacle = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
+            } else {
+                const relativePos = toRelativeCoords(pos);
+                if (mode === 'source') source = relativePos;
+                else if (mode === 'destination') destination = relativePos;
+                currentPath = [];
+            }
+            draw();
+            checkRunButton();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || simulationRunning) return;
+            const pos = getMousePos(e);
+            currentObstacle.x2 = pos.x;
+            currentObstacle.y2 = pos.y;
+            draw();
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDrawing || simulationRunning) return;
+            isDrawing = false;
+            
+            const finalRect = {
+                x1: Math.min(currentObstacle.x1, currentObstacle.x2),
+                y1: Math.min(currentObstacle.y1, currentObstacle.y2),
+                x2: Math.max(currentObstacle.x1, currentObstacle.x2),
+                y2: Math.max(currentObstacle.y1, currentObstacle.y2),
+            };
+
+            if (finalRect.x2 - finalRect.x1 > 5 && finalRect.y2 - finalRect.y1 > 5) {
+                // Store obstacle coordinates in relative format
+                obstacles.push({
+                    x1: finalRect.x1 / canvasSize,
+                    y1: finalRect.y1 / canvasSize,
+                    x2: finalRect.x2 / canvasSize,
+                    y2: finalRect.y2 / canvasSize,
+                });
+                currentPath = [];
+                statusMessage.textContent = `Obstacle added. Total: ${obstacles.length}`;
+            }
+            currentObstacle = null;
+            draw();
+            checkRunButton();
+        });
+
+        runButton.addEventListener('click', () => {
+            if (simulationRunning || !source || !destination) return;
+            
+            simulationRunning = true;
+            checkRunButton();
+            currentStatusEl.textContent = "Running ES...";
+            genCountEl.textContent = '0';
+            bestCostEl.textContent = 'N/A';
+            pathLengthEl.textContent = 'N/A';
+            currentPath = [];
+            
+            const params = {
+                source: [source.x, source.y],
+                destination: [destination.x, destination.y],
+                obstacles: obstacles, // Already relative
+                num_waypoints: parseInt(waypointsInput.value),
+                generations: parseInt(generationsInput.value),
+                initial_sigma: parseFloat(sigmaInput.value)
+            };
+            socket.emit('solve_path', params);
+        });
+
+        resetButton.addEventListener('click', () => {
+            if (simulationRunning) return;
+            obstacles = [];
+            currentPath = [];
+            source = null;
+            destination = null;
+            statusMessage.textContent = "Map reset. Set source, destination, and draw obstacles.";
+            currentStatusEl.textContent = "Ready";
+            genCountEl.textContent = '0';
+            bestCostEl.textContent = 'N/A';
+            pathLengthEl.textContent = 'N/A';
+            draw();
+            checkRunButton();
+        });
+
+        // --- Initial Setup ---
+        const resizeObserver = new ResizeObserver(updateCanvasSize);
+        resizeObserver.observe(canvas);
+
+        window.onload = () => {
+            updateCanvasSize();
+            checkRunButton();
+        };
+    </script>
+</body>
+</html>
