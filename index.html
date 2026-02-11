@@ -11,7 +11,7 @@
         body { 
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             margin: 0; 
-            padding: 1.5em;
+            padding: 1em;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #1f2937;
@@ -20,20 +20,10 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 2em;
+            margin-bottom: 1.5em;
         }
         
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header p {
-            margin: 0.5em 0 0 0;
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
+        .header h1 { margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         
         .container { 
             display: grid;
@@ -44,20 +34,12 @@
         }
         
         @media (min-width: 1000px) {
-            .container {
-                grid-template-columns: 2fr 1fr;
-            }
-        }
-        
-        .main-content { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 1em;
+            .container { grid-template-columns: 2fr 1fr; }
         }
         
         .canvas-wrapper {
             background: white;
-            padding: 1.5em;
+            padding: 1em;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
@@ -71,12 +53,13 @@
             height: auto;
             aspect-ratio: 1 / 1;
             display: block;
+            touch-action: none; /* Prevents scrolling while drawing on mobile */
         }
         
         .controls { 
             display: flex; 
             flex-direction: column; 
-            gap: 1.5em; 
+            gap: 1.2em; 
             padding: 1.5em; 
             background: white;
             border-radius: 12px; 
@@ -88,298 +71,114 @@
             padding-bottom: 1em;
         }
         
-        .control-section:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        
         .section-title {
             font-weight: 700;
-            font-size: 1.1em;
+            font-size: 0.9em;
             margin: 0 0 1em 0;
             color: #4f46e5;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
-        .control-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0.5em; 
-            margin-bottom: 1em;
-        }
-        
-        .control-group:last-child {
-            margin-bottom: 0;
-        }
-        
-        label { 
-            font-weight: 600; 
-            font-size: 0.9em; 
-            color: #374151;
-        }
-        
-        input, select { 
-            padding: 10px; 
-            border-radius: 6px; 
-            border: 2px solid #d1d5db; 
-            font-size: 1em;
-            transition: border-color 0.2s;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #4f46e5;
-        }
-        
         .button-group {
             display: flex;
-            gap: 0.75em;
+            gap: 0.5em;
             flex-direction: column;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5em;
         }
         
         button { 
-            padding: 12px 20px; 
+            padding: 10px; 
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             cursor: pointer; 
             font-weight: 700; 
-            font-size: 1em;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+            transition: transform 0.1s;
         }
         
-        button:hover:not(:disabled) { 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-        
-        button:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        
-        button:disabled { 
-            background: #9ca3af; 
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        button.reset-btn {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        }
-        
-        button.clear-path-btn {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
+        button:hover:not(:disabled) { opacity: 0.9; }
+        button:active:not(:disabled) { transform: scale(0.98); }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
         
         .stats-box { 
-            background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-            border: 2px solid #7c3aed;
-            padding: 1.5em; 
-            border-radius: 10px;
-        }
-        
-        .stats-box .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5em 0;
-            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-        }
-        
-        .stats-box .stat-row:last-child {
-            border-bottom: none;
-        }
-        
-        .stats-box .stat-label {
-            font-weight: 600;
-            color: #5b21b6;
-        }
-        
-        .stats-box .stat-value {
-            font-weight: 700;
-            color: #1f2937;
-            font-size: 1.1em;
-        }
-        
-        .stat-value.violation {
-            color: #dc2626;
-        }
-        
-        .stat-value.valid {
-            color: #10b981;
-        }
-        
-        .status-message { 
-            text-align: center;
-            padding: 1em;
-            background: white;
+            background: #f3f4f6;
+            padding: 1em; 
             border-radius: 8px;
-            font-weight: 500;
-            color: #4b5563;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .status-running {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
-        }
-        
-        .status-success {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-        }
-        
-        .status-error {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-        }
-        
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75em;
-            margin-top: 1em;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
             font-size: 0.85em;
         }
         
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 2px solid #374151;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 0.5em;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
-            transition: width 0.3s ease;
-            width: 0%;
+        .stat-row { display: flex; justify-content: space-between; padding: 0.3em 0; }
+        .stat-label { font-weight: 600; color: #4b5563; }
+        .stat-value { font-weight: 700; }
+        .violation { color: #dc2626; }
+        .valid { color: #10b981; }
+
+        .status-message { 
+            text-align: center;
+            padding: 0.8em;
+            margin-top: 1em;
+            background: #fff;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🧬 Evolution Strategy Pathfinder</h1>
-        <p>Watch AI evolve optimal paths through obstacles - See mutation in action!</p>
+        <h1>🧬 Evolution Pathfinder</h1>
+        <p>AI learning through trial, error, and selection.</p>
     </div>
     
     <div class="container">
         <div class="main-content">
             <div class="canvas-wrapper">
                 <canvas id="map"></canvas>
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #10b981;"></div>
-                        <span>Source Point</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #3b82f6;"></div>
-                        <span>Destination</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ef4444;"></div>
-                        <span>Obstacles</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: rgba(252, 165, 165, 0.4);"></div>
-                        <span>Safety Zone</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #1f2937;"></div>
-                        <span>Best Path</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: rgba(139, 92, 246, 0.3); border-style: dashed;"></div>
-                        <span>Candidate (Noise)</span>
-                    </div>
-                </div>
             </div>
-            <div class="status-message" id="status-message">Connecting to server...</div>
+            <div class="status-message" id="status-message">Connecting...</div>
         </div>
         
         <div class="controls">
             <div class="control-section">
-                <h3 class="section-title">🎯 Setup</h3>
-                <div class="control-group">
-                    <label for="mode-select">Drawing Mode</label>
-                    <select id="mode-select">
-                        <option value="obstacle" selected>🚧 Draw Obstacles (Click & Drag)</option>
-                        <option value="source">🟢 Set Source (Click)</option>
-                        <option value="destination">🔵 Set Destination (Click)</option>
+                <h3 class="section-title">🗺️ Quick Load Maps</h3>
+                <div class="map-grid">
+                    <button onclick="loadMap('simple')" style="background: #10b981;">🟢 Simple</button>
+                    <button onclick="loadMap('maze')" style="background: #4f46e5;">🌀 Maze</button>
+                    <button onclick="loadMap('wall')" style="background: #ef4444;">🧱 The Wall</button>
+                    <button onclick="loadMap('trap')" style="background: #f59e0b;">🕳️ The Trap</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3 class="section-title">🎯 Manual Setup</h3>
+                <div style="margin-bottom: 1em;">
+                    <select id="mode-select" style="width: 100%; padding: 8px; border-radius: 6px;">
+                        <option value="obstacle">🚧 Draw Obstacle</option>
+                        <option value="source">🟢 Set Source</option>
+                        <option value="destination">🔵 Set Destination</option>
                     </select>
                 </div>
-                
                 <div class="button-group">
                     <button id="run-solver" disabled>▶ Run Evolution</button>
-                    <button id="clear-path" class="clear-path-btn">🗑️ Clear Path Only</button>
-                    <button id="reset-map" class="reset-btn">🔄 Reset Everything</button>
+                    <button id="reset-map" style="background: #374151;">🔄 Reset Map</button>
                 </div>
             </div>
 
             <div class="control-section">
-                <h3 class="section-title">📊 Statistics</h3>
+                <h3 class="section-title">📊 Stats</h3>
                 <div class="stats-box">
-                    <div class="stat-row">
-                        <span class="stat-label">Status:</span>
-                        <span class="stat-value" id="current-status">Idle</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Generation:</span>
-                        <span class="stat-value" id="gen-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Violations:</span>
-                        <span class="stat-value" id="violations">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Path Length:</span>
-                        <span class="stat-value" id="path-length">N/A</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Improvements:</span>
-                        <span class="stat-value" id="improvements">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Avg Sigma:</span>
-                        <span class="stat-value" id="avg-sigma">N/A</span>
-                    </div>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-            </div>
-
-            <div class="control-section">
-                <h3 class="section-title">⚙️ Algorithm Parameters</h3>
-                <div class="control-group">
-                    <label for="num-waypoints">Number of Waypoints: <span id="waypoints-val">15</span></label>
-                    <input id="num-waypoints" type="range" value="15" min="5" max="50" step="5" />
-                </div>
-                <div class="control-group">
-                    <label for="num-generations">Generations: <span id="generations-val">2000</span></label>
-                    <input id="num-generations" type="range" value="2000" min="500" max="5000" step="100" />
-                </div>
-                <div class="control-group">
-                    <label for="initial-sigma">Initial Mutation Rate: <span id="sigma-val">0.05</span></label>
-                    <input id="initial-sigma" type="range" value="0.05" min="0.01" max="0.3" step="0.01" />
+                    <div class="stat-row"><span class="stat-label">Gen:</span> <span id="gen-count" class="stat-value">0</span></div>
+                    <div class="stat-row"><span class="stat-label">Violations:</span> <span id="violations" class="stat-value">0</span></div>
+                    <div class="stat-row"><span class="stat-label">Length:</span> <span id="path-length" class="stat-value">N/A</span></div>
                 </div>
             </div>
         </div>
@@ -388,421 +187,169 @@
     <script>
         const canvas = document.getElementById('map');
         const ctx = canvas.getContext('2d');
-        
-        // --- UI Elements ---
-        const runButton = document.getElementById('run-solver');
-        const resetButton = document.getElementById('reset-map');
-        const clearPathButton = document.getElementById('clear-path');
-        const modeSelect = document.getElementById('mode-select');
-        const waypointsInput = document.getElementById('num-waypoints');
-        const generationsInput = document.getElementById('num-generations');
-        const sigmaInput = document.getElementById('initial-sigma');
-        const statusMessage = document.getElementById('status-message');
-        const currentStatusEl = document.getElementById('current-status');
-        const genCountEl = document.getElementById('gen-count');
-        const violationsEl = document.getElementById('violations');
-        const pathLengthEl = document.getElementById('path-length');
-        const improvementsEl = document.getElementById('improvements');
-        const avgSigmaEl = document.getElementById('avg-sigma');
-        const progressFill = document.getElementById('progress-fill');
-        
-        const waypointsVal = document.getElementById('waypoints-val');
-        const generationsVal = document.getElementById('generations-val');
-        const sigmaVal = document.getElementById('sigma-val');
+        const socket = io();
 
-        // --- State Management ---
-        let source = null;
-        let destination = null;
-        let obstacles = [];
-        let currentPath = [];
-        let candidatePath = [];
-        let isDrawing = false;
-        let currentObstacle = null;
+        // State
+        let source = null, destination = null, obstacles = [];
+        let currentPath = [], candidatePath = [];
+        let isDrawing = false, firstTap = null, currentObstacle = null;
         let simulationRunning = false;
-        
-        const CLEARANCE_DISTANCE = 12.0;  // Increased to match server (2% of 600px)
-
         let canvasSize = 600;
 
-        // Update slider value displays
-        waypointsInput.addEventListener('input', (e) => {
-            waypointsVal.textContent = e.target.value;
-        });
-        
-        generationsInput.addEventListener('input', (e) => {
-            generationsVal.textContent = e.target.value;
-        });
-        
-        sigmaInput.addEventListener('input', (e) => {
-            sigmaVal.textContent = parseFloat(e.target.value).toFixed(2);
-        });
+        // UI Refs
+        const runButton = document.getElementById('run-solver');
+        const statusMessage = document.getElementById('status-message');
+        const modeSelect = document.getElementById('mode-select');
 
-        // --- Canvas & Coordinate Scaling ---
         function updateCanvasSize() {
-            const newSize = canvas.clientWidth;
-            if (canvas.width !== newSize) {
-                canvas.width = newSize;
-                canvas.height = newSize;
-                canvasSize = newSize;
-                draw();
-            }
+            canvas.width = canvas.height = canvasSize = canvas.clientWidth;
+            draw();
         }
 
-        function toCanvasCoords(point) {
-            return { x: point.x * canvasSize, y: point.y * canvasSize };
-        }
+        const toRel = (p) => ({ x: p.x / canvasSize, y: p.y / canvasSize });
+        const toCan = (p) => ({ x: p.x * canvasSize, y: p.y * canvasSize });
 
-        function toRelativeCoords(point) {
-            return { x: point.x / canvasSize, y: point.y / canvasSize };
-        }
-
-        // --- WebSocket Connection ---
-        const socket = io();
         socket.on('connect', () => {
-            statusMessage.textContent = "✅ Connected! Set source, destination, and draw obstacles to begin.";
-            statusMessage.className = 'status-message';
-            currentStatusEl.textContent = "Ready";
-            checkRunButton();
-        });
-
-        socket.on('disconnect', () => {
-            statusMessage.textContent = "❌ Disconnected. Please ensure app.py is running and refresh the page.";
-            statusMessage.className = 'status-message status-error';
-            currentStatusEl.textContent = "Disconnected";
+            statusMessage.textContent = "✅ Connected. Load a map or draw to start!";
             checkRunButton();
         });
 
         socket.on('path_update', (data) => {
-            // Current best path
             currentPath = data.path.map(p => [p[0] * canvasSize, p[1] * canvasSize]);
+            if (data.candidate_path) candidatePath = data.candidate_path.map(p => [p[0] * canvasSize, p[1] * canvasSize]);
             
-            // Candidate path (showing the mutation/noise)
-            if (data.candidate_path) {
-                candidatePath = data.candidate_path.map(p => [p[0] * canvasSize, p[1] * canvasSize]);
-            }
+            document.getElementById('gen-count').textContent = data.generation;
+            document.getElementById('violations').textContent = data.violations;
+            document.getElementById('violations').className = data.violations > 0 ? 'stat-value violation' : 'stat-value valid';
+            document.getElementById('path-length').textContent = data.length.toFixed(3);
             
-            const hasViolations = data.violations > 0;
-            
-            genCountEl.textContent = data.generation;
-            violationsEl.textContent = data.violations;
-            violationsEl.className = hasViolations ? 'stat-value violation' : 'stat-value valid';
-            pathLengthEl.textContent = data.length.toFixed(4);
-            improvementsEl.textContent = data.improvements || 0;
-            avgSigmaEl.textContent = data.avg_sigma ? data.avg_sigma.toFixed(5) : "N/A";
-            
-            const progress = (data.generation / parseInt(generationsInput.value)) * 100;
-            progressFill.style.width = progress + '%';
-            
-            if (hasViolations) {
-                statusMessage.textContent = `🔍 Gen ${data.generation}: Finding valid path... (${data.violations} violations)`;
-                statusMessage.className = 'status-message status-running';
-            } else {
-                const accepted = data.accepted ? '✓ Accepted' : '✗ Rejected';
-                statusMessage.textContent = `🧬 Gen ${data.generation}: Optimizing - ${accepted} (${data.improvements} improvements)`;
-                statusMessage.className = 'status-message status-running';
-            }
-
             draw();
-            
-            if (data.generation >= parseInt(generationsInput.value)) {
+            if (data.generation >= 2000) { // Assuming 2000 is your default
                 simulationRunning = false;
-                runButton.disabled = false;
-                runButton.textContent = "▶ Run Evolution";
-                currentStatusEl.textContent = "Complete";
-                candidatePath = [];  // Clear candidate path
-                
-                if (hasViolations) {
-                    statusMessage.textContent = `⚠️ Evolution complete but path has ${data.violations} violations. Try more generations or adjust obstacles.`;
-                    statusMessage.className = 'status-message status-error';
-                } else {
-                    statusMessage.textContent = `✨ Perfect! Valid path found with ${data.improvements} improvements. Length: ${data.length.toFixed(4)}`;
-                    statusMessage.className = 'status-message status-success';
-                }
-                draw();  // Final draw without candidate
+                candidatePath = [];
+                checkRunButton();
+                draw();
             }
         });
 
-        // --- Drawing Logic ---
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
             
-            // Draw clearance margins (safety zones)
-            ctx.fillStyle = 'rgba(252, 165, 165, 0.25)';
+            // Obstacles
+            ctx.fillStyle = '#ef4444';
             obstacles.forEach(obs => {
-                const x = Math.min(obs.x1, obs.x2) * canvasSize - CLEARANCE_DISTANCE;
-                const y = Math.min(obs.y1, obs.y2) * canvasSize - CLEARANCE_DISTANCE;
-                const w = Math.abs(obs.x2 - obs.x1) * canvasSize + 2 * CLEARANCE_DISTANCE;
-                const h = Math.abs(obs.y2 - obs.y1) * canvasSize + 2 * CLEARANCE_DISTANCE;
-                ctx.fillRect(x, y, w, h);
+                ctx.fillRect(obs.x1 * canvasSize, obs.y1 * canvasSize, (obs.x2 - obs.x1) * canvasSize, (obs.y2 - obs.y1) * canvasSize);
             });
 
-            // Draw obstacles
-            ctx.fillStyle = '#ef4444';
-            ctx.strokeStyle = '#991b1b';
-            ctx.lineWidth = 2;
-            obstacles.forEach(obs => {
-                const rect = { 
-                    x1: obs.x1 * canvasSize, 
-                    y1: obs.y1 * canvasSize, 
-                    x2: obs.x2 * canvasSize, 
-                    y2: obs.y2 * canvasSize 
-                };
-                ctx.fillRect(rect.x1, rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
-                ctx.strokeRect(rect.x1, rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
-            });
-            
-            // Draw current drawing obstacle
-            if (isDrawing && currentObstacle) {
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
-                ctx.strokeStyle = '#991b1b';
+            // Crosshair Helper
+            if (firstTap && modeSelect.value === 'obstacle') {
+                ctx.strokeStyle = 'rgba(79, 70, 229, 0.4)';
                 ctx.setLineDash([5, 5]);
-                ctx.fillRect(currentObstacle.x1, currentObstacle.y1, 
-                    currentObstacle.x2 - currentObstacle.x1, 
-                    currentObstacle.y2 - currentObstacle.y1);
-                ctx.strokeRect(currentObstacle.x1, currentObstacle.y1, 
-                    currentObstacle.x2 - currentObstacle.x1, 
-                    currentObstacle.y2 - currentObstacle.y1);
+                ctx.beginPath(); ctx.moveTo(firstTap.x, 0); ctx.lineTo(firstTap.x, canvasSize); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, firstTap.y); ctx.lineTo(canvasSize, firstTap.y); ctx.stroke();
                 ctx.setLineDash([]);
             }
-            
-            // Draw CANDIDATE path first (the mutation/noise) - semi-transparent purple
-            if (candidatePath.length > 0 && simulationRunning) {
+
+            // Dragging Preview
+            if (isDrawing && currentObstacle) {
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+                ctx.fillRect(currentObstacle.x1, currentObstacle.y1, currentObstacle.x2 - currentObstacle.x1, currentObstacle.y2 - currentObstacle.y1);
+            }
+
+            // Paths
+            if (candidatePath.length > 0) {
                 ctx.strokeStyle = 'rgba(139, 92, 246, 0.4)';
-                ctx.lineWidth = 3;
-                ctx.setLineDash([8, 4]);
-                ctx.beginPath();
-                ctx.moveTo(candidatePath[0][0], candidatePath[0][1]);
-                for (let i = 1; i < candidatePath.length; i++) {
-                    ctx.lineTo(candidatePath[i][0], candidatePath[i][1]);
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                // Draw candidate waypoints (mutation points)
-                ctx.fillStyle = 'rgba(139, 92, 246, 0.5)';
-                ctx.strokeStyle = 'rgba(109, 40, 217, 0.8)';
                 ctx.lineWidth = 2;
-                for (let i = 1; i < candidatePath.length - 1; i++) {
-                    ctx.beginPath();
-                    ctx.arc(candidatePath[i][0], candidatePath[i][1], 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.stroke();
-                }
+                ctx.beginPath(); candidatePath.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.stroke();
             }
-            
-            // Draw CURRENT BEST path on top - solid dark
             if (currentPath.length > 0) {
                 ctx.strokeStyle = '#1f2937';
-                ctx.lineWidth = 4;
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                ctx.shadowBlur = 4;
-                ctx.beginPath();
-                ctx.moveTo(currentPath[0][0], currentPath[0][1]);
-                for (let i = 1; i < currentPath.length; i++) {
-                    ctx.lineTo(currentPath[i][0], currentPath[i][1]);
-                }
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-                
-                // Draw current waypoints
-                ctx.fillStyle = '#f59e0b';
-                ctx.strokeStyle = '#92400e';
-                ctx.lineWidth = 2;
-                for (let i = 1; i < currentPath.length - 1; i++) {
-                    ctx.beginPath();
-                    ctx.arc(currentPath[i][0], currentPath[i][1], 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                    ctx.stroke();
-                }
-            }
-            
-            // Draw source
-            if (source) {
-                const s = toCanvasCoords(source);
-                ctx.fillStyle = '#10b981';
-                ctx.strokeStyle = '#065f46';
                 ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, 10, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-                
-                ctx.fillStyle = '#065f46';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.fillText('S', s.x - 5, s.y - 15);
+                ctx.beginPath(); currentPath.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.stroke();
             }
-            
-            // Draw destination
-            if (destination) {
-                const d = toCanvasCoords(destination);
-                ctx.fillStyle = '#3b82f6';
-                ctx.strokeStyle = '#1e40af';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, 10, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-                
-                ctx.fillStyle = '#1e40af';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.fillText('D', d.x - 5, d.y - 15);
-            }
+
+            if (source) drawNode(source, '#10b981', 'S');
+            if (destination) drawNode(destination, '#3b82f6', 'D');
         }
 
-        // --- Interactivity ---
-        function getMousePos(evt) {
-            const rect = canvas.getBoundingClientRect();
-            return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-        }
-        
-        function checkRunButton() {
-            const isReady = socket.connected && source && destination && obstacles.length > 0;
-            runButton.disabled = !isReady || simulationRunning;
-            
-            if (!socket.connected) {
-                runButton.textContent = "⏳ Connecting...";
-            } else if (simulationRunning) {
-                runButton.textContent = "⏸ Evolving...";
-            } else if (isReady) {
-                runButton.textContent = "▶ Run Evolution";
-            } else {
-                runButton.textContent = "⚠️ Setup Required";
-            }
+        function drawNode(rel, color, txt) {
+            const p = toCan(rel);
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'black'; ctx.fillText(txt, p.x-4, p.y-12);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
+        canvas.addEventListener('pointerdown', (e) => {
             if (simulationRunning) return;
-            const pos = getMousePos(e);
+            const pos = { x: e.offsetX, y: e.offsetY };
             const mode = modeSelect.value;
 
             if (mode === 'obstacle') {
-                isDrawing = true;
-                currentObstacle = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
-            } else {
-                const relativePos = toRelativeCoords(pos);
-                if (mode === 'source') {
-                    source = relativePos;
-                    statusMessage.textContent = "✅ Source set! Now set destination and draw obstacles.";
-                } else if (mode === 'destination') {
-                    destination = relativePos;
-                    statusMessage.textContent = "✅ Destination set! Draw obstacles and click 'Run Evolution'.";
+                if (!firstTap) {
+                    firstTap = pos;
+                    isDrawing = true;
+                    currentObstacle = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
+                } else {
+                    addObstacle(firstTap, pos);
+                    firstTap = null; isDrawing = false;
                 }
-                currentPath = [];
-                candidatePath = [];
+            } else {
+                if (mode === 'source') source = toRel(pos);
+                else destination = toRel(pos);
+                checkRunButton();
             }
             draw();
-            checkRunButton();
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing || simulationRunning) return;
-            const pos = getMousePos(e);
-            currentObstacle.x2 = pos.x;
-            currentObstacle.y2 = pos.y;
+        canvas.addEventListener('pointermove', (e) => {
+            if (!isDrawing) return;
+            currentObstacle.x2 = e.offsetX;
+            currentObstacle.y2 = e.offsetY;
             draw();
         });
 
-        canvas.addEventListener('mouseup', (e) => {
-            if (!isDrawing || simulationRunning) return;
-            isDrawing = false;
-            
-            const finalRect = {
-                x1: Math.min(currentObstacle.x1, currentObstacle.x2),
-                y1: Math.min(currentObstacle.y1, currentObstacle.y2),
-                x2: Math.max(currentObstacle.x1, currentObstacle.x2),
-                y2: Math.max(currentObstacle.y1, currentObstacle.y2),
-            };
-
-            if (finalRect.x2 - finalRect.x1 > 5 && finalRect.y2 - finalRect.y1 > 5) {
-                obstacles.push({
-                    x1: finalRect.x1 / canvasSize,
-                    y1: finalRect.y1 / canvasSize,
-                    x2: finalRect.x2 / canvasSize,
-                    y2: finalRect.y2 / canvasSize,
-                });
-                currentPath = [];
-                candidatePath = [];
-                statusMessage.textContent = `🚧 Obstacle added! Total: ${obstacles.length} obstacle${obstacles.length > 1 ? 's' : ''}`;
-            }
-            currentObstacle = null;
-            draw();
+        function addObstacle(p1, p2) {
+            obstacles.push({
+                x1: Math.min(p1.x, p2.x) / canvasSize,
+                y1: Math.min(p1.y, p2.y) / canvasSize,
+                x2: Math.max(p1.x, p2.x) / canvasSize,
+                y2: Math.max(p1.y, p2.y) / canvasSize
+            });
             checkRunButton();
-        });
+        }
+
+        function loadMap(type) {
+            obstacles = []; currentPath = []; source = {x: 0.1, y: 0.5}; destination = {x: 0.9, y: 0.5};
+            if (type === 'simple') obstacles.push({x1: 0.4, y1: 0.3, x2: 0.6, y2: 0.7});
+            else if (type === 'maze') { obstacles.push({x1: 0.3, y1: 0, x2: 0.4, y2: 0.6}, {x1: 0.6, y1: 0.4, x2: 0.7, y2: 1}); }
+            else if (type === 'wall') obstacles.push({x1: 0.48, y1: 0.1, x2: 0.52, y2: 0.9});
+            else if (type === 'trap') obstacles.push({x1: 0.4, y1: 0.3, x2: 0.6, y2: 0.35}, {x1: 0.4, y1: 0.65, x2: 0.6, y2: 0.7}, {x1: 0.4, y1: 0.35, x2: 0.45, y2: 0.65});
+            statusMessage.textContent = "Map loaded. Press Run!";
+            draw(); checkRunButton();
+        }
+
+        function checkRunButton() {
+            runButton.disabled = !source || !destination || obstacles.length === 0 || simulationRunning;
+            runButton.textContent = simulationRunning ? "🧬 Evolving..." : "▶ Run Evolution";
+        }
 
         runButton.addEventListener('click', () => {
-            if (simulationRunning || !source || !destination) return;
-            
-            simulationRunning = true;
-            checkRunButton();
-            currentStatusEl.textContent = "Evolving";
-            genCountEl.textContent = '0';
-            violationsEl.textContent = '0';
-            pathLengthEl.textContent = 'N/A';
-            improvementsEl.textContent = '0';
-            avgSigmaEl.textContent = 'N/A';
-            progressFill.style.width = '0%';
-            currentPath = [];
-            candidatePath = [];
-            
-            statusMessage.textContent = "🧬 Evolution started! Watch the mutations (purple) and best path (black)...";
-            statusMessage.className = 'status-message status-running';
-            
-            const params = {
+            simulationRunning = true; checkRunButton();
+            socket.emit('solve_path', {
                 source: [source.x, source.y],
                 destination: [destination.x, destination.y],
                 obstacles: obstacles,
-                num_waypoints: parseInt(waypointsInput.value),
-                generations: parseInt(generationsInput.value),
-                initial_sigma: parseFloat(sigmaInput.value)
-            };
-            socket.emit('solve_path', params);
+                num_waypoints: 15,
+                generations: 2000,
+                initial_sigma: 0.05
+            });
         });
 
-        clearPathButton.addEventListener('click', () => {
-            if (simulationRunning) return;
-            currentPath = [];
-            candidatePath = [];
-            genCountEl.textContent = '0';
-            violationsEl.textContent = '0';
-            pathLengthEl.textContent = 'N/A';
-            improvementsEl.textContent = '0';
-            avgSigmaEl.textContent = 'N/A';
-            progressFill.style.width = '0%';
-            statusMessage.textContent = "Path cleared. Ready to run evolution again!";
-            statusMessage.className = 'status-message';
-            currentStatusEl.textContent = "Ready";
-            draw();
+        document.getElementById('reset-map').addEventListener('click', () => {
+            obstacles = []; source = null; destination = null; currentPath = []; draw(); checkRunButton();
         });
 
-        resetButton.addEventListener('click', () => {
-            if (simulationRunning) return;
-            obstacles = [];
-            currentPath = [];
-            candidatePath = [];
-            source = null;
-            destination = null;
-            statusMessage.textContent = "🔄 Map reset! Set source, destination, and draw obstacles.";
-            statusMessage.className = 'status-message';
-            currentStatusEl.textContent = "Ready";
-            genCountEl.textContent = '0';
-            violationsEl.textContent = '0';
-            pathLengthEl.textContent = 'N/A';
-            improvementsEl.textContent = '0';
-            avgSigmaEl.textContent = 'N/A';
-            progressFill.style.width = '0%';
-            draw();
-            checkRunButton();
-        });
-
-        // --- Initial Setup ---
-        const resizeObserver = new ResizeObserver(updateCanvasSize);
-        resizeObserver.observe(canvas);
-
-        window.onload = () => {
-            updateCanvasSize();
-            checkRunButton();
-            draw();
-        };
+        window.addEventListener('resize', updateCanvasSize);
+        window.onload = updateCanvasSize;
     </script>
 </body>
 </html>
