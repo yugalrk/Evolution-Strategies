@@ -53,7 +53,7 @@
             height: auto;
             aspect-ratio: 1 / 1;
             display: block;
-            touch-action: none; /* Prevents scrolling while drawing on mobile */
+            touch-action: none; 
         }
         
         .controls { 
@@ -73,19 +73,13 @@
         
         .section-title {
             font-weight: 700;
-            font-size: 0.9em;
+            font-size: 0.85em;
             margin: 0 0 1em 0;
             color: #4f46e5;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
-        .button-group {
-            display: flex;
-            gap: 0.5em;
-            flex-direction: column;
-        }
-
         .map-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -131,6 +125,9 @@
             font-weight: 500;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        label { display: block; font-size: 0.85em; font-weight: 600; margin-bottom: 4px; color: #374151; }
+        input[type="range"] { width: 100%; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -159,9 +156,21 @@
             </div>
 
             <div class="control-section">
+                <h3 class="section-title">⚙️ AI Parameters</h3>
+                <label>Waypoints: <span id="waypoints-val">15</span></label>
+                <input id="num-waypoints" type="range" value="15" min="5" max="50" step="5">
+
+                <label>Generations: <span id="generations-val">2000</span></label>
+                <input id="num-generations" type="range" value="2000" min="500" max="5000" step="100">
+
+                <label>Mutation Rate (σ): <span id="sigma-val">0.05</span></label>
+                <input id="initial-sigma" type="range" value="0.05" min="0.01" max="0.2" step="0.01">
+            </div>
+
+            <div class="control-section">
                 <h3 class="section-title">🎯 Manual Setup</h3>
                 <div style="margin-bottom: 1em;">
-                    <select id="mode-select" style="width: 100%; padding: 8px; border-radius: 6px;">
+                    <select id="mode-select" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd;">
                         <option value="obstacle">🚧 Draw Obstacle</option>
                         <option value="source">🟢 Set Source</option>
                         <option value="destination">🔵 Set Destination</option>
@@ -169,16 +178,17 @@
                 </div>
                 <div class="button-group">
                     <button id="run-solver" disabled>▶ Run Evolution</button>
-                    <button id="reset-map" style="background: #374151;">🔄 Reset Map</button>
+                    <button id="reset-map" style="background: #374151;">🔄 Reset Everything</button>
                 </div>
             </div>
 
-            <div class="control-section">
+            <div class="control-section" style="border-bottom: none;">
                 <h3 class="section-title">📊 Stats</h3>
                 <div class="stats-box">
                     <div class="stat-row"><span class="stat-label">Gen:</span> <span id="gen-count" class="stat-value">0</span></div>
                     <div class="stat-row"><span class="stat-label">Violations:</span> <span id="violations" class="stat-value">0</span></div>
-                    <div class="stat-row"><span class="stat-label">Length:</span> <span id="path-length" class="stat-value">N/A</span></div>
+                    <div class="stat-row"><span class="stat-label">Path Length:</span> <span id="path-length" class="stat-value">N/A</span></div>
+                    <div class="stat-row"><span class="stat-label">Avg Sigma:</span> <span id="avg-sigma" class="stat-value">N/A</span></div>
                 </div>
             </div>
         </div>
@@ -200,6 +210,14 @@
         const runButton = document.getElementById('run-solver');
         const statusMessage = document.getElementById('status-message');
         const modeSelect = document.getElementById('mode-select');
+        const waypointsIn = document.getElementById('num-waypoints');
+        const generationsIn = document.getElementById('num-generations');
+        const sigmaIn = document.getElementById('initial-sigma');
+
+        // Slider Updates
+        waypointsIn.oninput = (e) => document.getElementById('waypoints-val').textContent = e.target.value;
+        generationsIn.oninput = (e) => document.getElementById('generations-val').textContent = e.target.value;
+        sigmaIn.oninput = (e) => document.getElementById('sigma-val').textContent = parseFloat(e.target.value).toFixed(2);
 
         function updateCanvasSize() {
             canvas.width = canvas.height = canvasSize = canvas.clientWidth;
@@ -210,7 +228,7 @@
         const toCan = (p) => ({ x: p.x * canvasSize, y: p.y * canvasSize });
 
         socket.on('connect', () => {
-            statusMessage.textContent = "✅ Connected. Load a map or draw to start!";
+            statusMessage.textContent = "✅ Connected. Ready to Evolve!";
             checkRunButton();
         });
 
@@ -222,9 +240,10 @@
             document.getElementById('violations').textContent = data.violations;
             document.getElementById('violations').className = data.violations > 0 ? 'stat-value violation' : 'stat-value valid';
             document.getElementById('path-length').textContent = data.length.toFixed(3);
+            document.getElementById('avg-sigma').textContent = data.avg_sigma ? data.avg_sigma.toFixed(4) : "N/A";
             
             draw();
-            if (data.generation >= 2000) { // Assuming 2000 is your default
+            if (data.generation >= parseInt(generationsIn.value)) {
                 simulationRunning = false;
                 candidatePath = [];
                 checkRunButton();
@@ -235,13 +254,13 @@
         function draw() {
             ctx.clearRect(0, 0, canvasSize, canvasSize);
             
-            // Obstacles
+            // Draw Obstacles
             ctx.fillStyle = '#ef4444';
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x1 * canvasSize, obs.y1 * canvasSize, (obs.x2 - obs.x1) * canvasSize, (obs.y2 - obs.y1) * canvasSize);
             });
 
-            // Crosshair Helper
+            // Crosshair Helper for Mobile
             if (firstTap && modeSelect.value === 'obstacle') {
                 ctx.strokeStyle = 'rgba(79, 70, 229, 0.4)';
                 ctx.setLineDash([5, 5]);
@@ -250,13 +269,13 @@
                 ctx.setLineDash([]);
             }
 
-            // Dragging Preview
+            // Drawing Preview
             if (isDrawing && currentObstacle) {
                 ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
                 ctx.fillRect(currentObstacle.x1, currentObstacle.y1, currentObstacle.x2 - currentObstacle.x1, currentObstacle.y2 - currentObstacle.y1);
             }
 
-            // Paths
+            // Path Rendering
             if (candidatePath.length > 0) {
                 ctx.strokeStyle = 'rgba(139, 92, 246, 0.4)';
                 ctx.lineWidth = 2;
@@ -275,7 +294,7 @@
         function drawNode(rel, color, txt) {
             const p = toCan(rel);
             ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = 'black'; ctx.fillText(txt, p.x-4, p.y-12);
+            ctx.fillStyle = 'black'; ctx.font = "bold 12px sans-serif"; ctx.fillText(txt, p.x-4, p.y-12);
         }
 
         canvas.addEventListener('pointerdown', (e) => {
@@ -320,15 +339,16 @@
         function loadMap(type) {
             obstacles = []; currentPath = []; source = {x: 0.1, y: 0.5}; destination = {x: 0.9, y: 0.5};
             if (type === 'simple') obstacles.push({x1: 0.4, y1: 0.3, x2: 0.6, y2: 0.7});
-            else if (type === 'maze') { obstacles.push({x1: 0.3, y1: 0, x2: 0.4, y2: 0.6}, {x1: 0.6, y1: 0.4, x2: 0.7, y2: 1}); }
+            else if (type === 'maze') obstacles.push({x1: 0.3, y1: 0, x2: 0.4, y2: 0.6}, {x1: 0.6, y1: 0.4, x2: 0.7, y2: 1});
             else if (type === 'wall') obstacles.push({x1: 0.48, y1: 0.1, x2: 0.52, y2: 0.9});
             else if (type === 'trap') obstacles.push({x1: 0.4, y1: 0.3, x2: 0.6, y2: 0.35}, {x1: 0.4, y1: 0.65, x2: 0.6, y2: 0.7}, {x1: 0.4, y1: 0.35, x2: 0.45, y2: 0.65});
-            statusMessage.textContent = "Map loaded. Press Run!";
+            statusMessage.textContent = "Map Loaded! Adjust params or click Run.";
             draw(); checkRunButton();
         }
 
         function checkRunButton() {
-            runButton.disabled = !source || !destination || obstacles.length === 0 || simulationRunning;
+            const ready = source && destination && obstacles.length > 0 && !simulationRunning;
+            runButton.disabled = !ready;
             runButton.textContent = simulationRunning ? "🧬 Evolving..." : "▶ Run Evolution";
         }
 
@@ -338,15 +358,16 @@
                 source: [source.x, source.y],
                 destination: [destination.x, destination.y],
                 obstacles: obstacles,
-                num_waypoints: 15,
-                generations: 2000,
-                initial_sigma: 0.05
+                num_waypoints: parseInt(waypointsIn.value),
+                generations: parseInt(generationsIn.value),
+                initial_sigma: parseFloat(sigmaIn.value)
             });
         });
 
-        document.getElementById('reset-map').addEventListener('click', () => {
-            obstacles = []; source = null; destination = null; currentPath = []; draw(); checkRunButton();
-        });
+        document.getElementById('reset-map').onclick = () => {
+            obstacles = []; source = null; destination = null; currentPath = []; candidatePath = []; firstTap = null;
+            draw(); checkRunButton();
+        };
 
         window.addEventListener('resize', updateCanvasSize);
         window.onload = updateCanvasSize;
