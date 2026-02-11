@@ -457,8 +457,7 @@
         }
 
         // --- WebSocket Connection ---
-        const socket = io("http://127.0.0.1:5000");
-
+        const socket = io();
         socket.on('connect', () => {
             statusMessage.textContent = "✅ Connected! Set source, destination, and draw obstacles to begin.";
             statusMessage.className = 'status-message';

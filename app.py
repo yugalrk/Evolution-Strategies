@@ -1,3 +1,4 @@
+import os
 import json
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, emit
@@ -6,8 +7,10 @@ from es_pathfinder import solve_path
 # --- Configuration ---
 app = Flask(__name__, static_folder='.')
 app.config['SECRET_KEY'] = 'es_secret_key_2024'
-# Initialize SocketIO with CORS support
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Initialize SocketIO with CORS support and eventlet for production performance
+# We use 'eventlet' to handle multiple concurrent real-time streams on Render
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 
 # --- SocketIO Event Handler ---
@@ -30,9 +33,10 @@ def handle_solve_path(json_data):
     print(f"{'='*60}\n")
     
     # Call the ES solver function with socketio for real-time updates
+    # Ensure es_pathfinder.py uses socketio.emit to send updates
     final_result = solve_path(json_data, socketio=socketio)
     
-    # Send the final result
+    # Send the final result back to the client
     emit('path_update', final_result)
     
     print(f"\n{'='*60}")
@@ -54,22 +58,14 @@ def index():
 # --- Server Startup ---
 
 if __name__ == '__main__':
+    # 1. Grab the port from Render's environment, default to 5000 for local testing
+    port = int(os.environ.get('PORT', 5000))
+    
     print("\n" + "="*70)
     print("🚀 EVOLUTION STRATEGY PATHFINDER SERVER")
+    print(f"🌐 Running on: http://0.0.0.0:{port}")
     print("="*70)
-    print("\n📋 PREREQUISITES:")
-    print("   Make sure you have installed the required packages:")
-    print("   pip install Flask Flask-SocketIO numpy shapely")
-    print("\n🌐 SERVER STARTING:")
-    print("   Open your browser and navigate to:")
-    print("   ➡️  http://127.0.0.1:5000/")
-    print("\n📖 HOW TO USE:")
-    print("   1. Set Source point (green) - click after selecting 'Set Source'")
-    print("   2. Set Destination point (blue) - click after selecting 'Set Destination'")
-    print("   3. Draw Obstacles (red) - drag rectangles after selecting 'Draw Obstacles'")
-    print("   4. Click 'Run Evolution' to watch AI find the optimal path!")
-    print("\n💡 TIP:")
-    print("   Watch the waypoints evolve in real-time as the algorithm optimizes!")
-    print("="*70 + "\n")
     
-    socketio.run(app, debug=False, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)
+    # 2. Host must be '0.0.0.0' so the external world can connect
+    # 3. Debug must be False in production (Render)
+    socketio.run(app, debug=False, host='0.0.0.0', port=port)
