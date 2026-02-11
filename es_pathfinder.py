@@ -217,7 +217,7 @@ def mutate(parent_path, parent_sigma, dimensions):
 
 # --- 5. MAIN ES SOLVER FUNCTION ---
 
-def solve_path(params, socketio=None):
+def solve_path(params, socketio=None, sid=None, tasks_dict=None):
     """
     Runs the (1+1) Evolution Strategy algorithm.
     
@@ -225,10 +225,10 @@ def solve_path(params, socketio=None):
     
     1. INITIALIZE: Start with a straight line guess
     2. LOOP for N generations:
-       a. MUTATE: Create offspring by adding noise to parent
-       b. EVALUATE: Calculate fitness of offspring
-       c. SELECT: If offspring is better, it becomes the new parent
-       d. ADAPT: Mutation strength automatically adjusts
+        a. MUTATE: Create offspring by adding noise to parent
+        b. EVALUATE: Calculate fitness of offspring
+        c. SELECT: If offspring is better, it becomes the new parent
+        d. ADAPT: Mutation strength automatically adjusts
     3. RETURN: Best solution found
     
     KEY INSIGHT: No explicit "learning" of obstacle positions!
@@ -293,6 +293,10 @@ def solve_path(params, socketio=None):
     
     # --- EVOLUTION LOOP (1+1)-ES ---
     for gen in range(1, generations + 1):
+        # 🛑 STOP CHECK (Multi-tenant isolation)
+        if sid and tasks_dict and not tasks_dict.get(sid, True):
+            return {"path": [], "cost": 0, "length": 0, "violations": 0, "status": "stopped"}
+
         # === THE CORE EVOLUTIONARY CYCLE ===
         
         # STEP 1: Generate offspring via mutation (exploration)
@@ -352,7 +356,7 @@ def solve_path(params, socketio=None):
                 "improvements": improvements,
                 "avg_sigma": float(np.mean(parent_sigma)),
                 "accepted": bool(offspring_cost <= parent_cost)
-            })
+            }, to=sid)
             time.sleep(0.008)
 
     # --- Final Results ---

@@ -1,247 +1,106 @@
-# 🧬 Evolution Strategy Pathfinder
+# 🧬 Evolution Strategy Pathfinder (Production Edition)
 
-An interactive web application that visualizes Evolution Strategies (ES) finding optimal paths through obstacle-filled environments in real-time.
+An interactive, high-performance web application that visualizes **Evolution Strategies (ES)** finding optimal paths through obstacle-filled environments in real-time. This version is optimized for cloud deployment (Render) and supports multiple concurrent users.
 
 ## 🎯 Overview
 
-This application demonstrates how Evolution Strategies, a type of optimization algorithm inspired by biological evolution, can solve pathfinding problems. Watch as the algorithm evolves waypoints to create an optimal path from source to destination while avoiding obstacles.
+This application demonstrates how Evolution Strategies—a gradient-free optimization technique inspired by biological evolution—can solve complex pathfinding problems. It is a direct visualization of the same principles used in **RLHF (Reinforcement Learning from Human Feedback)** to train Large Language Models (LLMs) to avoid "obstacles" like toxicity and bias.
 
-## ✨ Features
+## ✨ New & Advanced Features
 
-- **Real-time Visualization**: Watch the path evolve generation by generation
-- **Interactive Canvas**: Draw custom obstacles, set source and destination points
-- **Live Statistics**: Track generation count, cost, path length, improvements, and mutation rate
-- **Adjustable Parameters**: Control waypoints, generations, and mutation rates
-- **Responsive Design**: Beautiful gradient UI that works on different screen sizes
-- **Safety Zones**: Visual clearance margins around obstacles
+* **Multi-Tenant Isolation**: Uses Socket.IO Rooms (`sid`) to allow multiple users to run independent simulations simultaneously without cross-talk.
+* **Mobile-Optimized UX**:
+* **Tap-to-Place**: A two-tap system for creating obstacles, perfect for touchscreens.
+* **Crosshair Helper**: Visual alignment guides for precise placement on mobile.
 
-## 🚀 Installation
 
-### Prerequisites
+* **Quick-Load Presets**: Four pre-built challenge maps (**Simple, Maze, The Wall, The Trap**) to see the AI in action instantly.
+* **Emergency Stop/Reset**: A server-side interrupt signal that kills the Python loop immediately when the user resets the map.
+* **Self-Adaptive Mutation**: Watch the ** (Sigma)** value evolve in real-time as the AI learns how to learn.
 
-- Python 3.7 or higher
-- pip (Python package installer)
+## 🚀 Installation & Deployment
 
 ### Required Packages
 
-Install the required dependencies:
-
 ```bash
-pip install Flask Flask-SocketIO numpy shapely
+pip install Flask Flask-SocketIO eventlet gunicorn numpy shapely
+
 ```
 
-### Package Details
+### Production Deployment (Render/Heroku)
 
-- **Flask**: Web framework for the server
-- **Flask-SocketIO**: Real-time WebSocket communication
-- **NumPy**: Numerical computations and array operations
-- **Shapely**: Geometric calculations for collision detection
+This project is configured for **Gunicorn** using the **Eventlet** worker class to handle real-time WebSocket concurrency.
+
+**Start Command:**
+
+```bash
+gunicorn -k eventlet -w 1 --timeout 120 app.py:app
+
+```
 
 ## 📂 Project Structure
 
 ```
 evolution-pathfinder/
 │
-├── app.py                 # Flask server with SocketIO
-├── es_pathfinder.py       # Evolution Strategy algorithm
-├── index.html             # Interactive web interface
-└── README.md              # This file
+├── app.py              # Flask + SocketIO (Multi-tenant & Session Logic)
+├── es_pathfinder.py    # The (1+1)-ES Engine (Gradient-free Optimization)
+├── index.html          # Frontend (Canvas API + Pointer Events)
+└── requirements.txt    # Production dependencies
+
 ```
 
 ## 🎮 How to Use
 
-### 1. Start the Server
+### 1. Quick Start (Recommended)
 
-Run the Flask application:
+Select one of the **Quick Load Maps**:
 
-```bash
-python app.py
-```
+* **🌀 Maze**: Complex navigation through narrow gaps.
+* **🕳️ The Trap**: A "C-shape" designed to test if the AI can escape local optima.
 
-You should see:
-```
-🚀 EVOLUTION STRATEGY PATHFINDER SERVER
-============================================================
-Open your browser and navigate to:
-➡️  http://127.0.0.1:5000/
-```
+### 2. Manual Setup
 
-### 2. Open in Browser
+1. **Set Points**: Use the dropdown to place your **Source (🟢)** and **Destination (🔵)**.
+2. **Draw Obstacles**:
+* **Desktop**: Click and drag to draw red forbidden zones.
+* **Mobile**: Tap once for the first corner, tap again for the opposite corner.
 
-Navigate to `http://127.0.0.1:5000/` in your web browser.
 
-### 3. Set Up the Problem
+3. **Adjust Parameters**:
+* **Waypoints**: The "DNA" of your path. More points = more flexibility.
+* **Mutation Rate ()**: How much "risk" the AI takes in its guesses.
 
-1. **Set Source Point** (Green 🟢):
-   - Select "Set Source" from the dropdown
-   - Click anywhere on the canvas to place the starting point
 
-2. **Set Destination Point** (Blue 🔵):
-   - Select "Set Destination" from the dropdown
-   - Click anywhere on the canvas to place the goal point
 
-3. **Draw Obstacles** (Red 🚧):
-   - Select "Draw Obstacles" from the dropdown
-   - Click and drag to create rectangular obstacles
-   - Create multiple obstacles to make the problem more challenging
+### 3. Watch the Evolution
 
-### 4. Configure Parameters
+Click **"▶ Run Evolution"**:
 
-Adjust the algorithm parameters as needed:
+* **Purple Dashed Lines**: The "Offspring" (mutations) being tested.
+* **Black Line & Yellow Dots**: The "Parent" (current champion).
+* **Avg Sigma**: Watch as the AI automatically lowers its mutation rate to fine-tune the final path.
 
-- **Waypoints**: Number of intermediate points (5-50)
-  - More waypoints = more flexible paths but slower evolution
-  - Fewer waypoints = simpler paths but may not navigate complex obstacles
+## 🧮 The Science: Why ES?
 
-- **Generations**: Number of evolution iterations (100-5000)
-  - More generations = better optimization but longer runtime
-  - Start with 1000 for most problems
+Unlike standard Neural Network training which uses **Backpropagation** (calculating gradients), ES uses **Random Perturbation**:
 
-- **Initial Mutation Rate** (Sigma): Starting mutation strength (0.01-0.5)
-  - Higher values = more exploration but less precision
-  - Lower values = more exploitation of known good solutions
-  - The algorithm adapts this automatically during evolution
+1. **Mutation**: Add random noise to the current best path.
+2. **Evaluation**: Check the path against the **Fitness Function** (Length + Obstacle Penalties).
+3. **Selection**: If the noisy path is better, it becomes the new standard.
 
-### 5. Run Evolution
+**Why this matters for LLMs:** When we train AI on human values (Safety/Ethics), we don't always have a mathematical gradient for "common sense." ES allows us to "evolve" the model toward safer outputs by penalizing "toxic obstacles."
 
-Click the **"▶ Run Evolution"** button and watch:
+## 📊 Technical Features
 
-- **Yellow dots**: Waypoints being optimized
-- **Black line**: Current best path
-- **Statistics**: Real-time updates on performance
-- **Progress bar**: Evolution completion status
-
-## 🧮 Algorithm Explanation
-
-### Evolution Strategy (1+1)-ES
-
-The application uses a **(1+1) Evolution Strategy** with self-adaptive mutation:
-
-1. **Initialization**: 
-   - Waypoints are initialized along a straight line from source to destination
-
-2. **Mutation**:
-   - Each generation creates one offspring by mutating the parent path
-   - Mutation strength (sigma) adapts automatically using the "1/5 success rule"
-
-3. **Selection**:
-   - If the offspring is better (or equal), it replaces the parent
-   - Otherwise, the parent survives
-
-4. **Fitness Function**:
-   - **Primary**: Minimize path length (Euclidean distance)
-   - **Penalty**: Massive cost for violating obstacle clearance
-   - **Penalty**: Heavy cost for going out of bounds
-
-### Self-Adaptive Mutation
-
-The algorithm adjusts its own mutation rate (sigma) during evolution:
-
-- **Global component**: Affects all parameters equally
-- **Individual components**: Each coordinate can mutate differently
-- **Learning rate**: Scales with problem dimensionality
-
-This allows the algorithm to:
-- Explore broadly early in evolution
-- Refine solutions precisely as it converges
-
-## 📊 Understanding the Statistics
-
-- **Status**: Current algorithm state (Ready, Evolving, Complete)
-- **Generation**: Current iteration number
-- **Best Cost**: Total fitness (lower is better)
-  - Shows "INVALID" if path violates constraints
-- **Path Length**: Euclidean distance of the path
-- **Improvements**: Number of times a better solution was found
-- **Avg Sigma**: Average mutation strength (adapts over time)
-
-## 🎨 Visual Elements
-
-| Color | Element | Description |
-|-------|---------|-------------|
-| 🟢 Green | Source | Starting point (S) |
-| 🔵 Blue | Destination | Goal point (D) |
-| 🔴 Red | Obstacles | Forbidden regions |
-| 🟡 Yellow | Waypoints | Points being evolved |
-| ⚫ Black | Path | Current best solution |
-| 🟠 Orange (transparent) | Safety Zone | Minimum clearance margin |
-
-## 💡 Tips for Best Results
-
-1. **Start Simple**: Begin with 2-3 obstacles to understand the behavior
-2. **Increase Complexity**: Add more obstacles for challenging mazes
-3. **Adjust Waypoints**: Use more waypoints for complex obstacle arrangements
-4. **Be Patient**: Complex problems may need 2000+ generations
-5. **Watch the Evolution**: Notice how the path gradually improves
-6. **Experiment**: Try different parameter combinations
-
-## 🔧 Troubleshooting
-
-### "Disconnected" Error
-- Ensure `app.py` is running
-- Check that no other service is using port 5000
-- Refresh the browser page
-
-### "No Valid Path Found"
-- Increase the number of generations
-- Reduce the number of waypoints and try again
-- Check if a path is actually possible (remove some obstacles)
-- Increase initial mutation rate for more exploration
-
-### Slow Performance
-- Reduce the number of waypoints
-- Reduce the number of generations
-- Clear some obstacles
-
-### Path Goes Through Obstacles
-- Increase the number of generations
-- The red transparent zones show the required clearance
-- Check that obstacles aren't too close together
-
-## 🔬 Technical Details
-
-### Coordinate System
-- Canvas uses normalized coordinates [0, 1] for portability
-- Clearance distance: 0.01 (1% of canvas width)
-- All calculations in relative coordinates, converted for display
-
-### Real-time Updates
-- WebSocket connection via Socket.IO
-- Updates every 10 generations for smooth visualization
-- Non-blocking architecture for responsive UI
-
-### Fitness Calculation
-```
-if (collision or out_of_bounds):
-    fitness = HARD_PENALTY + distance
-else:
-    fitness = path_length
-```
-
-## 🎓 Educational Value
-
-This project demonstrates:
-- **Evolutionary Algorithms**: Self-adaptive optimization
-- **Pathfinding**: Constrained optimization in 2D space
-- **Real-time Visualization**: Live algorithm performance
-- **Web Technologies**: Flask, SocketIO, Canvas API
-- **Computational Geometry**: Collision detection with Shapely
+* **Asynchronous Loop**: The server runs the evolution in a separate thread, emitting updates every 5 generations to keep the UI fluid.
+* **Coordinate Normalization**: All math is performed on a `[0, 1]` scale, ensuring the simulation behaves identically on a 4K monitor or a smartphone.
+* **Shapely Geometry**: Uses professional-grade spatial analysis for sub-pixel collision detection.
 
 ## 📝 License
 
-This project is open source and available for educational purposes.
-
-## 🤝 Contributing
-
-Feel free to fork, modify, and experiment with the code!
-
-## 📧 Support
-
-If you encounter issues or have questions:
-1. Check the troubleshooting section above
-2. Verify all dependencies are installed correctly
-3. Ensure Python 3.7+ is being used
+Educational Open Source. Feel free to use this to demonstrate Evolutionary Computation or Reinforcement Learning concepts.
 
 ---
 
-**Enjoy watching evolution find the optimal path! 🧬✨**
+**Build, Evolve, and Optimize! 🧬✨**

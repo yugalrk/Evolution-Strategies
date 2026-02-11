@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request # Added request
 from flask_socketio import SocketIO, emit
 from es_pathfinder import solve_path
 
@@ -9,9 +9,10 @@ app = Flask(__name__, static_folder='.')
 app.config['SECRET_KEY'] = 'es_secret_key_2024'
 
 # Initialize SocketIO with CORS support and eventlet for production performance
-# We use 'eventlet' to handle multiple concurrent real-time streams on Render
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
+# Track active tasks per session
+active_tasks = {}
 
 # --- SocketIO Event Handler ---
 
@@ -21,8 +22,11 @@ def handle_solve_path(json_data):
     Receives map parameters from the client and starts the ES solver, 
     streaming updates back to the browser in real-time.
     """
+    sid = request.sid
+    active_tasks[sid] = True
+    
     print(f"\n{'='*60}")
-    print(f"🧬 Starting Evolution Strategy Pathfinding")
+    print(f"🧬 Starting Evolution Strategy Pathfinding for SID: {sid}")
     print(f"{'='*60}")
     print(f"Source: {json_data['source']}")
     print(f"Destination: {json_data['destination']}")
@@ -32,20 +36,28 @@ def handle_solve_path(json_data):
     print(f"Initial Sigma: {json_data['initial_sigma']}")
     print(f"{'='*60}\n")
     
-    # Call the ES solver function with socketio for real-time updates
-    # Ensure es_pathfinder.py uses socketio.emit to send updates
-    final_result = solve_path(json_data, socketio=socketio)
+    # Call the ES solver function with sid and active_tasks for isolation
+    final_result = solve_path(json_data, socketio=socketio, sid=sid, tasks_dict=active_tasks)
     
-    # Send the final result back to the client
-    emit('path_update', final_result)
+    if sid in active_tasks:
+        del active_tasks[sid]
+    
+    # Send final result only to the requester
+    emit('path_update', final_result, to=sid)
     
     print(f"\n{'='*60}")
-    print(f"✅ Evolution Complete!")
+    print(f"✅ Evolution Complete for {sid}!")
     print(f"Final Cost: {final_result['cost']:.4f}")
     print(f"Path Length: {final_result['length']:.4f}")
     print(f"Total Improvements: {final_result.get('improvements', 'N/A')}")
     print(f"{'='*60}\n")
 
+@socketio.on('stop_evolution')
+def handle_stop():
+    sid = request.sid
+    if sid in active_tasks:
+        active_tasks[sid] = False
+        print(f"🛑 User stopped evolution: {sid}")
 
 # --- Flask Routing ---
 
@@ -58,7 +70,6 @@ def index():
 # --- Server Startup ---
 
 if __name__ == '__main__':
-    # 1. Grab the port from Render's environment, default to 5000 for local testing
     port = int(os.environ.get('PORT', 5000))
     
     print("\n" + "="*70)
@@ -66,6 +77,4 @@ if __name__ == '__main__':
     print(f"🌐 Running on: http://0.0.0.0:{port}")
     print("="*70)
     
-    # 2. Host must be '0.0.0.0' so the external world can connect
-    # 3. Debug must be False in production (Render)
     socketio.run(app, debug=False, host='0.0.0.0', port=port)
