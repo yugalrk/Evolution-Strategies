@@ -275,16 +275,31 @@
                 ctx.fillRect(currentObstacle.x1, currentObstacle.y1, currentObstacle.x2 - currentObstacle.x1, currentObstacle.y2 - currentObstacle.y1);
             }
 
-            // Path Rendering
+            // Path Rendering (Candidate/Noise)
             if (candidatePath.length > 0) {
                 ctx.strokeStyle = 'rgba(139, 92, 246, 0.4)';
                 ctx.lineWidth = 2;
                 ctx.beginPath(); candidatePath.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.stroke();
             }
+
+            // Path Rendering (Best Path)
             if (currentPath.length > 0) {
                 ctx.strokeStyle = '#1f2937';
                 ctx.lineWidth = 3;
-                ctx.beginPath(); currentPath.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); ctx.stroke();
+                ctx.beginPath(); 
+                currentPath.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])); 
+                ctx.stroke();
+
+                // Draw Yellow Waypoints (Only internal points)
+                ctx.fillStyle = '#fbbf24'; // Amber-400
+                ctx.strokeStyle = '#1f2937';
+                ctx.lineWidth = 1;
+                for (let i = 1; i < currentPath.length - 1; i++) {
+                    ctx.beginPath();
+                    ctx.arc(currentPath[i][0], currentPath[i][1], 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
             }
 
             if (source) drawNode(source, '#10b981', 'S');
@@ -353,7 +368,9 @@
         }
 
         runButton.addEventListener('click', () => {
-            simulationRunning = true; checkRunButton();
+            socket.emit('stop_evolution'); // Signal server to stop any previous ghost runs
+            simulationRunning = true; 
+            checkRunButton();
             socket.emit('solve_path', {
                 source: [source.x, source.y],
                 destination: [destination.x, destination.y],
@@ -365,6 +382,8 @@
         });
 
         document.getElementById('reset-map').onclick = () => {
+            socket.emit('stop_evolution');
+            simulationRunning = false;
             obstacles = []; source = null; destination = null; currentPath = []; candidatePath = []; firstTap = null;
             draw(); checkRunButton();
         };
